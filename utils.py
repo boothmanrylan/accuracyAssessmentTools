@@ -12,3 +12,20 @@ def build_error_matrix(map_classes, ref_classes):
             ref = (ref_classes == j).astype(int)
             matrix.loc[i, j] = np.sum(mapped * ref)
     return matrix
+
+def _expand_error_matrix(mat, map_col, ref_col):
+    """
+    Converts an error matrix into a dataframe of points' ref classes and map
+    classes. Used to verify that we get the same results as the paper, while
+    keeping the class init parameters the same as for the Stehman version.
+    """
+    map_values = []
+    ref_values = []
+    for i in range(mat.shape[0]):
+        for j in range(mat.shape[1]):
+            ij = mat.iloc[i, j]
+            for _ in range(ij):
+                map_values.append(mat.index[i])
+                ref_values.append(mat.index[j])
+    return pd.DataFrame({map_col: map_values, ref_col: ref_values})
+
