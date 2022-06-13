@@ -183,11 +183,49 @@ if __name__ == "__main__":
         df, "Stratum", "Map class", "Reference class", stratum_totals
     )
 
-    print("Area of class A:\n", assessment.PkA_estimate("A"))
-    print("Area of class C:\n", assessment.PkA_estimate("C"))
-    print("Overall Accuracy:\n", assessment.overall_accuracy())
-    print("User acc class B:\n", assessment.users_accuracy("B"))
-    print("Producers Acc class B:\n", assessment.producers_accuracy("B"))
-    print("Cell 2, 3 of error matrix:\n", assessment.Pij_estimate("B", "C"))
+    # ===============================================================
+    # THESE ARE THE VALUES GIVEN IN THE PAPER
+    # ==============================================================
+    prop_class_A = 0.35
+    prop_class_C = 0.20
+    overall_accuracy = 0.63
+    users_class_B = 0.574
+    producers_class_B = 0.794
+    cell_2_3 = 0.08
+    se_prop_class_A = 0.082
+    se_prop_class_C = 0.064
+    se_overall_accuracy = 0.085
+    se_users_class_B = 0.125
+    se_producers_class_B = 0.114
+
+    test, stats = assessment.PkA_estimate("A")
+    se = stats["std_err"]
+    print(f"Area of class A:\t{test:.3f}, SE: {se:.3f}", end=" | ")
+    print(f"EXPECTED: {prop_class_A}, {se_prop_class_A}")
+
+    test, stats = assessment.PkA_estimate("C")
+    se = stats["std_err"]
+    print(f"Area of class C:\t{test:.3f}, SE: {se:.3f}", end=" | ")
+    print(f"EXPECTED: {prop_class_C}, {se_prop_class_C}")
+
+    test, stats = assessment.overall_accuracy()
+    se = stats["std_err"]
+    print(f"Overall Accuracy:\t{test:.3f}, SE: {se:.3f}", end=" | ")
+    print(f"EXPECTED: {overall_accuracy}, {se_overall_accuracy}")
+
+    test, stats = assessment.users_accuracy("B")
+    se = stats["std_err"]
+    print(f"User acc class B:\t{test:.3f}, SE: {se:.3f}", end=" | ")
+    print(f"EXPECTED: {users_class_B}, {se_users_class_B}")
+
+    test, stats = assessment.producers_accuracy("B")
+    se = stats["std_err"]
+    print(f"Producers Acc class B:\t{test:.3f}, SE: {se:.3f}", end=" | ")
+    print(f"EXPECTED: {producers_class_B}, {se_producers_class_B}")
+
+    test, stats = assessment.Pij_estimate("B", "C")
+    se = stats["std_err"]
+    print(f"Cell 2, 3 of error matrix: {test:.3f}, SE: {se:.3f}", end=" | ")
+    print(f"EXPECTED: {cell_2_3}, not given")
+
     print("Error Matrix:\n", assessment.error_matrix())
-    print(assessment.error_matrix().sum())

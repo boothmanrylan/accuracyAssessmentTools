@@ -128,7 +128,6 @@ class Olofsson2014AccAssessment():
 
     def area(self, k):
         p_k, stats = self.proportion_area(k)
-        area = self.N * p_k
         std_err = self.N * stats["std_err"]
         return self.N * p_k, {"var": std_err ** 2, "std_err": std_err}
 
@@ -151,28 +150,87 @@ if __name__ == "__main__":
     assessment = Olofsson2014AccAssessment(
         input_df, "map", "ref", mapped_area)
 
+    # ===================================================
+    # THESE ARE THE VALUES GIVEN IN THE PAPER
+    # ===================================================
+    expected_users_accuracies = {
+        "Deforestation": "0.88 +/- 0.07",
+        "Forest gain": "0.73 +/- 0.10",
+        "Stable forest": "0.93 +/- 0.04",
+        "Stable non-forest": "0.96 +/- 0.02"
+    }
+
+    expected_producers_accuracies = {
+        "Deforestation": "0.75 +/- 0.21",
+        "Forest gain": "0.85 +/- 0.23",
+        "Stable forest": "0.93 +/- 0.03",
+        "Stable non-forest": "0.96 +/- 0.01"
+    }
+
+    expected_class_pixel_counts = {
+        "Deforestation": "235086 +/- 68418 pixels",
+        "Forest gain": "not given",
+        "Stable forest": "not given",
+        "Stable non-forest": "not given"
+    }
+
+    expected_class_areas = {
+        "Deforestation": "21158 +/- 6158 ha",
+        "Forest gain": "11686 +/- 3756 ha",
+        "Stable forest": "285770 +/- 15510 ha",
+        "Stable non-forest": "581386 +/- 16282"
+    }
+
+    expected_error_matrix = pd.DataFrame({
+        "Deforestation": [0.0176, 0, 0.0019, 0.0040],
+        "Forest gain": [0, 0.0110, 0, 0.0020],
+        "Stable forest": [0.0013, 0.0016, 0.2967, 0.0179],
+        "Stable non-forest": [0.0011, 0.0024, 0.0213, 0.6212],
+    });
+    expected_error_matrix.index = expected_error_matrix.columns
+
     print("--------------USERS ACC----------------")
     for k in df.columns:
         users_acc, stats = assessment.users_accuracy(k)
         se = stats["std_err"]
-        print(f"{k}: {users_acc:.2g} +/- {1.96 * se:.2g}")
+        expected = expected_users_accuracies[k]
+        print(f"{k}:\t{users_acc:.2g} +/- {1.96 * se:.2g}", end="\t| ")
+        print(f"EXPECTED: {expected}")
 
     print("\n-------------PRODUCERS ACC-------------")
     for k in df.columns:
         prods_acc, stats = assessment.producers_accuracy(k)
         se = stats["std_err"]
-        print(f"{k}: {prods_acc:.2g} +/- {1.96 * se:.2g}")
+        expected = expected_producers_accuracies[k]
+        print(f"{k}:\t{prods_acc:.2g} +/- {1.96 * se:.2g}", end="\t| ")
+        print(f"EXPECTED: {expected}")
 
     print("\n--------ESTIMATED AREA (pixels)--------")
     for k in df.columns:
         area, stats = assessment.area(k)
         se = stats["std_err"]
-        print(f"{k}: {area} +/- {1.96 * se}")
+        expected = expected_class_pixel_counts[k]
+        print(f"{k}:\t{area:.2f} +/- {1.96 * se:.2f}", end="\t| ")
+        print(f"EXPECTED: {expected}")
+
+    print("\n--------ESTIMATED AREA (ha)--------")
+    for k in df.columns:
+        area, stats = assessment.area(k)
+        area /= 11.11
+        se = stats["std_err"] / 11.11
+        expected = expected_class_areas[k]
+        print(f"{k}:\t{area:.2f} +/- {1.96 * se:.2f}", end="\t| ")
+        print(f"EXPECTED: {expected}")
 
     overall_acc, stats = assessment.overall_accuracy()
     se = stats["std_err"]
-    print(f"\noverall accuracy: {overall_acc:.2g} +/- {1.96 * se:.2g}\n")
+    print(f"\noverall accuracy: {overall_acc:.2g} +/- {1.96 * se:.2g}",
+        end=" | ")
+    print("EXPECTED: 0.95 +/- 0.02")
 
+    print("--------------ERROR MATRIX----------------")
     print(assessment.error_matrix())
+    print("\nEXPECTED ERROR MATRIX:")
+    print(expected_error_matrix)
 
 
