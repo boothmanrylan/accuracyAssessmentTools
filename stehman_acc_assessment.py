@@ -34,7 +34,9 @@ class Stehman2014AccAssessment():
         elif ref_val is not None and map_val is None:
             return self.ref_classes == ref_val
         elif ref_val is not None and map_val is not None:
-            return (self.ref_classes == ref_val) * (self.map_classes == map_val)
+            ref_matches = self.ref_classes == ref_val
+            map_matches = self.map_classes == map_val
+            return ref_matches * map_matches
         else:
             return self.map_classes == self.ref_classes
 
@@ -61,16 +63,16 @@ class Stehman2014AccAssessment():
             n_star_h = np.sum(self.strata_classes == h)
             s2_yh = self._sample_var_Y_bar_hat(y_u, h)
             a = N_star_h ** 2
-            b = (1 - (n_star_h / N_star_h)) # can be skipped b/c very small
+            b = (1 - (n_star_h / N_star_h)) # can be skipped b/c ~1
             c = s2_yh / n_star_h
             total += (a * b * c)
         ans = (1 / (self.N ** 2)) * total
-        return total if total >= 0 else 0 # if N is large will overflow
+        return ans if ans >= 0 else 0 # if N is large will overflow
 
     def _unbiased_estimator(self, y_u):
         Y = self._Y_bar_hat(y_u)
         var = self._var_Y_bar_hat(y_u)
-        return {"Y": Y, "var": var, "std_err": np.sqrt(var)}
+        return Y, {"var": var, "std_err": np.sqrt(var)}
 
     def overall_accuracy(self):
         """ get the unbiased overall accuracy estimate """
@@ -78,7 +80,7 @@ class Stehman2014AccAssessment():
         return self._unbiased_estimator(y_u)
 
     def PkA_estimate(self, k):
-        """ get the area estimate for reference class k """
+        """ get the proportion of area estimate for reference class k """
         y_u = self._indicator_func(ref_val=k)
         return self._unbiased_estimator(y_u)
 
@@ -122,7 +124,7 @@ class Stehman2014AccAssessment():
             )
 
             a = N_star_h ** 2
-            b = 1 - (n_star_h / N_star_h) # can be skipped b/c very small
+            b = 1 - (n_star_h / N_star_h) # can be skipped b/c ~1
             c = s2_yh + ((R ** 2) * s2_xh) - (2 * R * s_xyh)
 
             total += (a * b * c) / n_star_h
@@ -131,7 +133,7 @@ class Stehman2014AccAssessment():
     def _design_consistent_estimator(self, y_u, x_u):
         R = self._R_hat(y_u, x_u)
         var = self._var_R_hat(y_u, x_u)
-        return {"R": R, "var": var, "std_err": np.sqrt(var)}
+        return R, {"var": var, "std_err": np.sqrt(var)}
 
     def users_accuracy(self, k):
         """ users accuracy for class k """
@@ -158,26 +160,34 @@ class Stehman2014AccAssessment():
         return self._design_consistent_estimator(y_u, x_u)
 
     def error_matrix(self):
-        """ complete error matrix """
+        """ returns error matrix of class proportions """
         all_map_classes = np.unique(self.map_classes)
         all_ref_classes = np.unique(self.ref_classes)
-        matrix = np.zeros((all_map_classes.shape[0], all_ref_classes.shape[0]))
+        matrix = np.zeros(
+            (all_map_classes.shape[0], all_ref_classes.shape[0]))
         for i, map_class in enumerate(all_map_classes):
             for j, ref_class in enumerate(all_ref_classes):
-                matrix[i, j] = self.Pij_estimate(map_class, ref_class)["Y"]
+                matrix[i, j] = self.Pij_estimate(map_class, ref_class)[0]
         return matrix
+
+    def area(self, k):
+        """ estimate the total area of class k """
+        pka, stats = self.PkA_estimate(k)
+        std_err = self.N * stats["std_err"]
+        return self.N * pka, {"var": std_err ** e, "std_err": std_err}
 
 if __name__ == "__main__":
     df = pd.read_csv("./stehman2014_table2.csv", skiprows=1)
     stratum_totals = {1: 40000, 2: 30000, 3: 20000, 4: 10000}
-    accAssessment = Stehman2014AccAssessment(
+    assessment = Stehman2014AccAssessment(
         df, "Stratum", "Map class", "Reference class", stratum_totals
     )
 
-    print("Area of class A:\n", accAssessment.PkA_estimate("A"))
-    print("Area of class C:\n", accAssessment.PkA_estimate("C"))
-    print("Overall Accuracy:\n", accAssessment.overall_accuracy())
-    print("User acc class B:\n", accAssessment.users_accuracy("B"))
-    print("Producers Acc class B:\n", accAssessment.producers_accuracy("B"))
-    print("Cell 2, 3 of error matrix:\n", accAssessment.Pij_estimate("B", "C"))
-    print("Error Matrix:\n", accAssessment.error_matrix())
+    print("Area of class A:\n", assessment.PkA_estimate("A"))
+    print("Area of class C:\n", assessment.PkA_estimate("C"))
+    print("Overall Accuracy:\n", assessment.overall_accuracy())
+    print("User acc class B:\n", assessment.users_accuracy("B"))
+    print("Producers Acc class B:\n", assessment.producers_accuracy("B"))
+    print("Cell 2, 3 of error matrix:\n", assessment.Pij_estimate("B", "C"))
+    print("Error Matrix:\n", assessment.error_matrix())
+    print(assessment.error_matrix().sum())

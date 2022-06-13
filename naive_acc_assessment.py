@@ -2,6 +2,10 @@ import numpy as np
 import pandas as pd
 
 class NaiveAccAssessment():
+    """
+    Calculates users/producers/overall accuracy from an error matrix without
+    considering the proportion of mapped area of each class.
+    """
     def __init__(self, data, map_class, ref_class):
         self.all_classes = np.unique(data[map_class])
         self.num_classes = len(self.all_classes)
@@ -32,3 +36,7 @@ class NaiveAccAssessment():
 
     def error_matrix(self):
         return self.error_matrix
+
+    def area(self, k):
+        msg = "can't estimate area of a class from the error matrix alone"
+        raise NotImplementedError(msg)
