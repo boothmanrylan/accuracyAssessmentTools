@@ -1,17 +1,19 @@
 import numpy as np
 import pandas as pd
 
-def build_error_matrix(mapped_classes, ref_classes):
-    """ build the error matrix of sample counts """
-    all_classes = np.unique(ref_classes)
-    n_classes = all_classes.shape[0]
-    counts = np.zeros((n_classes, n_classes))
-    for i, map_class in enumerate(all_classes):
-        mapped_as_i = mapped_classes == map_class
-        for j, ref_class in enumerate(all_classes):
-            ref_is_j = ref_classes == ref_class
-            counts[i, j] = np.sum(mapped_as_i * ref_is_j)
-    return pd.DataFrame(counts, columns=all_classes, index=all_classes)
+from utils import build_error_matrix
+
+# def build_error_matrix(mapped_classes, ref_classes):
+#     """ build the error matrix of sample counts """
+#     all_classes = np.unique(ref_classes)
+#     n_classes = all_classes.shape[0]
+#     counts = np.zeros((n_classes, n_classes))
+#     for i, map_class in enumerate(all_classes):
+#         mapped_as_i = mapped_classes == map_class
+#         for j, ref_class in enumerate(all_classes):
+#             ref_is_j = ref_classes == ref_class
+#             counts[i, j] = np.sum(mapped_as_i * ref_is_j)
+#     return pd.DataFrame(counts, columns=all_classes, index=all_classes)
 
 
 def _expand_error_matrix(mat, map_col, ref_col):

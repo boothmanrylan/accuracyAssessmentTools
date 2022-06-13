@@ -1,6 +1,8 @@
 import numpy as np
 import pandas as pd
 
+from utils import build_error_matrix
+
 class NaiveAccAssessment():
     """
     Calculates users/producers/overall accuracy from an error matrix without
@@ -9,14 +11,8 @@ class NaiveAccAssessment():
     def __init__(self, data, map_class, ref_class):
         self.all_classes = np.unique(data[map_class])
         self.num_classes = len(self.all_classes)
-        matrix = np.zeros((self.num_classes, self.num_classes))
-        for i in self.all_classes:
-            for j in self.all_classes:
-                mapped = data[map_class] == i
-                ref = data[ref_class] == j
-                matrix[i, j] = np.sum(mapped * ref)
-        self.error_matrix = pd.DataFrame(
-            matrix, index=self.all_classes, columns=self.all_classes)
+        self.error_matrix = build_error_matrix(
+            data[map_class], data[ref_class])
         self.N = data.shape[0]
 
     def overall_accuracy(self):
