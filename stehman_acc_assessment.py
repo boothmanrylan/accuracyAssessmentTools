@@ -45,7 +45,7 @@ class Stehman2014AccAssessment():
         total = 0
         for h, N_star_h in iter(self.strata_population.items()):
             n_star_h = np.sum(self.strata_classes == h)
-            y_bar_h = np.sum(y_u * (self.strata_classes == h) / n_star_h)
+            y_bar_h = np.sum(y_u * (self.strata_classes == h)) / n_star_h
             total += N_star_h * y_bar_h / self.N
         return total
 
@@ -63,26 +63,35 @@ class Stehman2014AccAssessment():
             n_star_h = np.sum(self.strata_classes == h)
             s2_yh = self._sample_var_Y_bar_hat(y_u, h)
             a = N_star_h ** 2
-            b = (1 - (n_star_h / N_star_h)) # can be skipped b/c ~1
+            b = 1 - (n_star_h / N_star_h) # can be skipped b/c ~1
             c = s2_yh / n_star_h
             total += (a * b * c)
         ans = (1 / (self.N ** 2)) * total
-        return ans if ans >= 0 else 0 # if N is large will overflow
+
+        if ans < 0 and total > 0:
+            raise ValueError("integer overflow, self.N is likely too large")
+
+        return ans
 
     def _unbiased_estimator(self, y_u):
         Y = self._Y_bar_hat(y_u)
         var = self._var_Y_bar_hat(y_u)
-        return Y, {"var": var, "std_err": np.sqrt(var)}
+        return Y, np.sqrt(var)
 
     def overall_accuracy(self):
         """ get the unbiased overall accuracy estimate """
         y_u = self._indicator_func()
         return self._unbiased_estimator(y_u)
 
-    def PkA_estimate(self, k):
+    def PkA_estimate(self, k, return_area=False):
         """ get the proportion of area estimate for reference class k """
+        # y_u = self._indicator_func(map_val=k)
         y_u = self._indicator_func(ref_val=k)
-        return self._unbiased_estimator(y_u)
+        pka, se = self._unbiased_estimator(y_u)
+        if return_area:
+            return self.N * pka, self.N * se
+        else:
+            return pka, se
 
     def Pij_estimate(self, i, j):
         """ get the proportion of area for map class i and ref class j """
@@ -133,7 +142,7 @@ class Stehman2014AccAssessment():
     def _design_consistent_estimator(self, y_u, x_u):
         R = self._R_hat(y_u, x_u)
         var = self._var_R_hat(y_u, x_u)
-        return R, {"var": var, "std_err": np.sqrt(var)}
+        return R, np.sqrt(var)
 
     def users_accuracy(self, k):
         """ users accuracy for class k """
@@ -168,13 +177,22 @@ class Stehman2014AccAssessment():
         for i, map_class in enumerate(all_map_classes):
             for j, ref_class in enumerate(all_ref_classes):
                 matrix[i, j] = self.Pij_estimate(map_class, ref_class)[0]
-        return matrix
+        return pd.DataFrame(matrix, columns=all_map_classes,
+                index=all_map_classes)
 
-    def area(self, k):
+    def area(self, i):
         """ estimate the total area of class k """
-        pka, stats = self.PkA_estimate(k)
-        std_err = self.N * stats["std_err"]
-        return self.N * pka, {"var": std_err ** e, "std_err": std_err}
+        pij, se = self.Pij_estimate(i, i)
+        return self.N * pij, self.N * se
+        # pka, se = self.PkA_estimate(i)
+        # return self.N * pka, self.N * se
+        total_proportion = 0
+        total_var = 0
+        for j in np.unique(self.ref_classes):
+            pij, se = self.Pij_estimate(i, j)
+            total_proportion += pij
+            total_var += (se ** 2)
+        return self.N * total_proportion, self.N * np.sqrt(total_var)
 
 if __name__ == "__main__":
     df = pd.read_csv("./stehman2014_table2.csv", skiprows=1)
@@ -198,33 +216,27 @@ if __name__ == "__main__":
     se_users_class_B = 0.125
     se_producers_class_B = 0.114
 
-    test, stats = assessment.PkA_estimate("A")
-    se = stats["std_err"]
+    test, se = assessment.PkA_estimate("A")
     print(f"Area of class A:\t{test:.3f}, SE: {se:.3f}", end=" | ")
     print(f"EXPECTED: {prop_class_A}, {se_prop_class_A}")
 
-    test, stats = assessment.PkA_estimate("C")
-    se = stats["std_err"]
+    test, se = assessment.PkA_estimate("C")
     print(f"Area of class C:\t{test:.3f}, SE: {se:.3f}", end=" | ")
     print(f"EXPECTED: {prop_class_C}, {se_prop_class_C}")
 
-    test, stats = assessment.overall_accuracy()
-    se = stats["std_err"]
+    test, se = assessment.overall_accuracy()
     print(f"Overall Accuracy:\t{test:.3f}, SE: {se:.3f}", end=" | ")
     print(f"EXPECTED: {overall_accuracy}, {se_overall_accuracy}")
 
-    test, stats = assessment.users_accuracy("B")
-    se = stats["std_err"]
+    test, se = assessment.users_accuracy("B")
     print(f"User acc class B:\t{test:.3f}, SE: {se:.3f}", end=" | ")
     print(f"EXPECTED: {users_class_B}, {se_users_class_B}")
 
-    test, stats = assessment.producers_accuracy("B")
-    se = stats["std_err"]
+    test, se = assessment.producers_accuracy("B")
     print(f"Producers Acc class B:\t{test:.3f}, SE: {se:.3f}", end=" | ")
     print(f"EXPECTED: {producers_class_B}, {se_producers_class_B}")
 
-    test, stats = assessment.Pij_estimate("B", "C")
-    se = stats["std_err"]
+    test, se = assessment.Pij_estimate("B", "C")
     print(f"Cell 2, 3 of error matrix: {test:.3f}, SE: {se:.3f}", end=" | ")
     print(f"EXPECTED: {cell_2_3}, not given")
 

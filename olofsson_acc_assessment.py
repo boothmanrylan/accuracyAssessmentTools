@@ -20,7 +20,8 @@ class Olofsson2014AccAssessment():
         mapped_classes = data[map_col].values
         ref_classes = data[ref_col].values
 
-        self.all_classes = np.unique(ref_classes)
+        self.all_classes = np.unique(mapped_classes)
+
         matrix = build_error_matrix(mapped_classes, ref_classes)
         self._error_matrix_counts = matrix
 
@@ -34,12 +35,12 @@ class Olofsson2014AccAssessment():
     def overall_accuracy(self):
         """ equation 1 after substituting with equation 4 """
         acc = np.sum(np.diagonal(self._error_matrix))
-        vs = {i: self.users_accuracy(i)[1]["var"] for i in self.all_classes}
+        vs = {i: self.users_accuracy(i)[1] ** 2 for i in self.all_classes}
         var = np.sum([
             (self.mapped_proportions[i] ** 2) * vs[i]
             for i in self.all_classes
         ])
-        return acc, {"var": var, "std_err": np.sqrt(var)}
+        return acc, np.sqrt(var)
 
     def users_accuracy(self, i):
         """ equation 2 after substituting with equation 4
@@ -50,10 +51,11 @@ class Olofsson2014AccAssessment():
         acc = correct / incorrect
         n_i = np.sum(self._error_matrix_counts.loc[i, :])
         var = acc * (1 - acc) / (n_i - 1)
-        return acc, {"var": var, "std_err": np.sqrt(var)}
+        return acc, np.sqrt(var)
 
     def commission_error_rate(self, i):
-        return 1 - self.users_accuracy(i)[0]
+        acc, se = self.users_accuracy(i)
+        return 1 - acc, se
 
     def producers_accuracy(self, j):
         """ equation 3 after substituting with equation 4
@@ -81,10 +83,11 @@ class Olofsson2014AccAssessment():
         a /= n_j - 1
 
         var = (1 / (N_hat_j ** 2)) * (a + ((acc ** 2) * b))
-        return acc, {"var": var, "std_err": np.sqrt(var)}
+        return acc, np.sqrt(var)
 
     def omission_error_rate(self, j):
-        return 1 - self.producers_accuracy(j)[0]
+        acc, se = self.producers_accuracy(j)
+        return 1 - acc, se
 
     def proportion_area(self, k):
         """ equation 9 and equation 10 """
@@ -96,12 +99,11 @@ class Olofsson2014AccAssessment():
             p_ik = W_i * self._error_matrix_counts.loc[i, k] / n_i
             area += p_ik
             var += (W_i * p_ik - (p_ik ** 2)) / (n_i - 1)
-        return area, {"var": var, "std_err": np.sqrt(var)}
+        return area, np.sqrt(var)
 
     def area(self, k):
-        p_k, stats = self.proportion_area(k)
-        std_err = self.N * stats["std_err"]
-        return self.N * p_k, {"var": std_err ** 2, "std_err": std_err}
+        p_k, se = self.proportion_area(k)
+        return self.N * p_k, self.N * se
 
     def error_matrix(self):
         return self._error_matrix
@@ -163,39 +165,35 @@ if __name__ == "__main__":
 
     print("--------------USERS ACC----------------")
     for k in df.columns:
-        users_acc, stats = assessment.users_accuracy(k)
-        se = stats["std_err"]
+        users_acc, se = assessment.users_accuracy(k)
         expected = expected_users_accuracies[k]
         print(f"{k}:\t{users_acc:.2g} +/- {1.96 * se:.2g}", end="\t| ")
         print(f"EXPECTED: {expected}")
 
     print("\n-------------PRODUCERS ACC-------------")
     for k in df.columns:
-        prods_acc, stats = assessment.producers_accuracy(k)
-        se = stats["std_err"]
+        prods_acc, se = assessment.producers_accuracy(k)
         expected = expected_producers_accuracies[k]
         print(f"{k}:\t{prods_acc:.2g} +/- {1.96 * se:.2g}", end="\t| ")
         print(f"EXPECTED: {expected}")
 
     print("\n--------ESTIMATED AREA (pixels)--------")
     for k in df.columns:
-        area, stats = assessment.area(k)
-        se = stats["std_err"]
+        area, se = assessment.area(k)
         expected = expected_class_pixel_counts[k]
         print(f"{k}:\t{area:.2f} +/- {1.96 * se:.2f}", end="\t| ")
         print(f"EXPECTED: {expected}")
 
     print("\n--------ESTIMATED AREA (ha)--------")
     for k in df.columns:
-        area, stats = assessment.area(k)
+        area, se = assessment.area(k)
         area /= 11.11
-        se = stats["std_err"] / 11.11
+        se /= 11.11
         expected = expected_class_areas[k]
         print(f"{k}:\t{area:.2f} +/- {1.96 * se:.2f}", end="\t| ")
         print(f"EXPECTED: {expected}")
 
-    overall_acc, stats = assessment.overall_accuracy()
-    se = stats["std_err"]
+    overall_acc, se = assessment.overall_accuracy()
     print(f"\noverall accuracy: {overall_acc:.2g} +/- {1.96 * se:.2g}",
         end=" | ")
     print("EXPECTED: 0.95 +/- 0.02")
@@ -204,5 +202,3 @@ if __name__ == "__main__":
     print(assessment.error_matrix())
     print("\nEXPECTED ERROR MATRIX:")
     print(expected_error_matrix)
-
-
