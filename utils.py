@@ -29,3 +29,42 @@ def _expand_error_matrix(mat, map_col, ref_col):
                 ref_values.append(mat.index[j])
     return pd.DataFrame({map_col: map_values, ref_col: ref_values})
 
+def pretty(matrix, class_names, total=False, accuracy=False):
+    try:
+        assert not (total and accuracy)
+    except AssertionError as E:
+        msg = "Can't calculate totals and accuracies simultaneously"
+        raise ValueError(msg) from E
+
+    if total:
+       matrix = matrix.append(matrix.sum(0), ignore_index=True) 
+       matrix = matrix.T.append(matrix.sum(1), ignore_index=True).T
+       matrix.index = pd.MultiIndex.from_product([
+           ["Map"], class_names + ["Total"]
+       ])
+       matrix.columns = pd.MultiIndex.from_product([
+            ["Reference"], class_names + ["Total"]
+       ])
+       return matrix
+
+    if accuracy:
+        true = np.diag(matrix)
+        overall = pd.Series([np.sum(true) / matrix.sum().sum()])
+        users = true / matrix.sum(0)
+        producers = true / matrix.sum(1)
+        producers_w_overall = producers.append(overall, ignore_index=True)
+
+        matrix = matrix.append(users, ignore_index=True)
+        matrix = matrix.T.append(producers_w_overall, ignore_index=True).T
+
+        matrix.index = pd.MultiIndex.from_product([
+            ["Map"], class_names + ["Producer's Acc."]
+        ])
+        matrix.columns = pd.MultiIndex.from_product([
+            ["Reference"], class_names + ["User's Acc."]
+        ])
+        return matrix
+
+    matrix.index = pd.MultiIndex.from_product([["Map"], class_names])
+    matrix.columns = pd.MultiIndex.from_product([["Reference"], class_names])
+    return matrix
