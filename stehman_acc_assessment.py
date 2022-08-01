@@ -40,13 +40,19 @@ class Stehman2014AccAssessment():
         else:
             return self.map_classes == self.ref_classes
 
-    def _Y_bar_hat(self, y_u):
+    def _Y_bar_hat(self, y_u, return_by_strata=False):
         """ equation 3 """
         total = 0
+        by_strata = {}
         for h, N_star_h in iter(self.strata_population.items()):
             n_star_h = np.sum(self.strata_classes == h)
             y_bar_h = np.sum(y_u * (self.strata_classes == h)) / n_star_h
-            total += N_star_h * y_bar_h / self.N
+            curr = N_star_h * y_bar_h / self.N
+            total += curr
+            by_strata[h] = curr
+
+        if return_by_strata:
+            return by_strata
         return total
 
     def _sample_var_Y_bar_hat(self, y_u, h):
@@ -56,47 +62,58 @@ class Stehman2014AccAssessment():
         y_bar_h = np.sum((y_u / n_star_h) * selector)
         return np.sum((((y_u - y_bar_h) ** 2) / (n_star_h - 1)) * selector)
 
-    def _var_Y_bar_hat(self, y_u):
+    def _se_Y_bar_hat(self, y_u, return_by_strata=False):
         """ equation 25 """
+        try:
+            assert 1 / (self.N ** 2) > 0
+        except AssertionError as E:
+            msg = "integer overflow, self.N is likely too large"
+            raise ValueError(msg) from E
+
         total = 0
+        by_strata = {}
         for h, N_star_h in iter(self.strata_population.items()):
             n_star_h = np.sum(self.strata_classes == h)
             s2_yh = self._sample_var_Y_bar_hat(y_u, h)
             a = N_star_h ** 2
             b = 1 - (n_star_h / N_star_h) # can be skipped b/c ~1
             c = s2_yh / n_star_h
-            total += (a * b * c)
-        ans = (1 / (self.N ** 2)) * total
+            curr = a * b * c / (self.N ** 2)
+            total += curr
+            by_strata[h] = curr
 
-        if ans < 0 and total > 0:
-            raise ValueError("integer overflow, self.N is likely too large")
+        if return_by_strata:
+            return {k: np.sqrt(v) for k, v in iter(by_strata.items())}
+        return np.sqrt(total)
 
-        return ans
-
-    def _unbiased_estimator(self, y_u):
-        Y = self._Y_bar_hat(y_u)
-        var = self._var_Y_bar_hat(y_u)
-        return Y, np.sqrt(var)
+    def _unbiased_estimator(self, y_u, return_by_strata=False):
+        Y = self._Y_bar_hat(y_u, return_by_strata)
+        se = self._se_Y_bar_hat(y_u, return_by_strata)
+        return Y, se
 
     def overall_accuracy(self):
         """ get the unbiased overall accuracy estimate """
         y_u = self._indicator_func()
         return self._unbiased_estimator(y_u)
 
-    def PkA_estimate(self, k, return_area=False):
+    def PkA_estimate(self, k, return_area=False, return_by_strata=False):
         """ get the proportion of area estimate for reference class k """
-        # y_u = self._indicator_func(map_val=k)
         y_u = self._indicator_func(ref_val=k)
-        pka, se = self._unbiased_estimator(y_u)
-        if return_area:
+        pka, se = self._unbiased_estimator(y_u, return_by_strata)
+
+        if return_by_strata and return_area:
+            pkas = {k: self.N * v for k, v in iter(pka.items())}
+            ses = {k: self.N * v for k, v in iter(se.items())}
+            return pkas, ses
+        elif return_area:
             return self.N * pka, self.N * se
         else:
             return pka, se
 
-    def Pij_estimate(self, i, j):
+    def Pij_estimate(self, i, j, return_by_strata=False):
         """ get the proportion of area for map class i and ref class j """
         y_u = self._indicator_func(map_val=i, ref_val=j)
-        return self._unbiased_estimator(y_u)
+        return self._unbiased_estimator(y_u, return_by_strata)
 
     def _R_hat(self, y_u, x_u):
         """ equation 27 """
@@ -193,6 +210,25 @@ class Stehman2014AccAssessment():
             total_proportion += pij
             total_var += (se ** 2)
         return self.N * total_proportion, self.N * np.sqrt(total_var)
+
+    def area_by_strata(self, i, mapped=False, reference=False, correct=False):
+        """ estimate the area of class i within each of the strata """
+        try:
+            assert(sum([int(mapped), int(reference), int(correct)]) == 1)
+        except AssertionError as E:
+            msg = "exactly 1 of mapped, reference, and correct must be true"
+            raise ValueError(msg) from E
+
+        if mapped:
+            raise NotImplementedError
+
+        if reference:
+            return self.PkA_estimate(i, True, True)
+
+        if correct:
+            pijs, ses = self.Pij(i, i, return_by_strata=True)
+            return {k: (self.N * p, self.N * s) for k, v in iter(ses.items())}
+
 
 if __name__ == "__main__":
     df = pd.read_csv("./stehman2014_table2.csv", skiprows=1)
