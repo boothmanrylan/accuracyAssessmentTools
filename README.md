@@ -20,13 +20,13 @@ verify that the math is being done properly, e.g.
 
 ```python
 import pandas as pd
-from olofsson_acc_assessment import OlofssonAccuracyAssessment
+from olofsson_acc_assessment import Olofsson2014AccAssessment as Olofsson
 
 data = pd.read_csv("/path/to/file/containing/assessment/points.csv")
 
 mapped_areas = {"forest": 200000, "deforestation": 1000}
 
-assessment = OlofssonAccuracyAssessment(
+assessment = Olofsson(
     data, "name of map value col", "name of ref value col",
     mapped_areas)
 
