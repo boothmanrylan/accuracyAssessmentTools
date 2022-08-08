@@ -46,7 +46,7 @@ class NaiveAccAssessment():
         msg = "can't estimate area of a class from the error matrix alone"
         raise NotImplementedError(msg)
 
-if __name__ == "__main__":
+def test():
     data = [[65, 4, 22, 24], [6, 81, 5, 8], [0, 11, 85, 19], [4, 7, 3, 90]]
     classes = ["D", "C", "BA", "SB"]
     df = pd.DataFrame(data, index=classes, columns=classes)
@@ -71,3 +71,6 @@ if __name__ == "__main__":
     for k in classes:
         prods = assessment.producers_accuracy(k)[0]
         print(f"Prods Acc {k}: {prods:.2f} | EXPECTED: {expected_prods[k]}")
+
+if __name__ == '__main__':
+    test()

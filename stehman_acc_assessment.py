@@ -230,7 +230,7 @@ class Stehman2014AccAssessment():
             return {k: (self.N * p, self.N * s) for k, v in iter(ses.items())}
 
 
-if __name__ == "__main__":
+def test():
     df = pd.read_csv("./stehman2014_table2.csv", skiprows=1)
     stratum_totals = {1: 40000, 2: 30000, 3: 20000, 4: 10000}
     assessment = Stehman2014AccAssessment(
@@ -277,3 +277,6 @@ if __name__ == "__main__":
     print(f"EXPECTED: {cell_2_3}, not given")
 
     print("Error Matrix:\n", assessment.error_matrix())
+
+if __name__ == '__main__':
+    test()

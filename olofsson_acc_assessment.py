@@ -108,7 +108,7 @@ class Olofsson2014AccAssessment():
     def error_matrix(self):
         return self._error_matrix
 
-if __name__ == "__main__":
+def test():
     data = {"Deforestation": [66, 0, 1, 2],
             "Forest gain": [0, 55, 0, 1],
             "Stable forest": [5, 8, 153, 9],
@@ -202,3 +202,6 @@ if __name__ == "__main__":
     print(assessment.error_matrix())
     print("\nEXPECTED ERROR MATRIX:")
     print(expected_error_matrix)
+
+if __name__ == '__main__':
+    test()
