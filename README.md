@@ -1,5 +1,10 @@
 # Accuracy Assessment Tools
 
+The simplest way to run this is to open the Jupyter Notebook
+`AccuracyAssessmentTools.ipynb` in Google Colab and follow the instructions
+in the notebook. To open the notebook in Colab, open the file in github,
+then click the open in colab button at the top of the file.
+
 Requires pandas and numpy.
 
 Input data is expected to be in a table with a column containing the mapped
