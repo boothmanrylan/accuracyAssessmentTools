@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 
 def build_error_matrix(map_classes, ref_classes):
-    all_classes = np.unique(map_classes)
+    all_classes = np.unique(np.vstack([map_classes, ref_classes]))
     num_classes = len(all_classes)
     matrix = pd.DataFrame(np.zeros((num_classes, num_classes)),
         index=all_classes, columns=all_classes)
