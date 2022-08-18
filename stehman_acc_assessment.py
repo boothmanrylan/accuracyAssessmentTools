@@ -25,7 +25,10 @@ class Stehman2014AccAssessment():
 
         self.N = np.sum(list(strata_population.values()))
 
-        self.strata_population = strata_population
+        self.strata_population = {
+            k: v for k, v in iter(strata_population.items())
+            if k in np.unique(self.strata_classes)
+        }
 
     def _indicator_func(self, map_val=None, ref_val=None):
         """ Calculate the indicator function y_u """
@@ -189,20 +192,17 @@ class Stehman2014AccAssessment():
         """ returns error matrix of class proportions """
         all_map_classes = np.unique(self.map_classes)
         all_ref_classes = np.unique(self.ref_classes)
-        matrix = np.zeros(
-            (all_map_classes.shape[0], all_ref_classes.shape[0]))
-        for i, map_class in enumerate(all_map_classes):
-            for j, ref_class in enumerate(all_ref_classes):
+        all_classes = np.unique(np.hstack([all_map_classes, all_ref_classes]))
+        matrix = np.zeros((all_classes.shape[0], all_classes.shape[0]))
+        for i, map_class in enumerate(all_classes):
+            for j, ref_class in enumerate(all_classes):
                 matrix[i, j] = self.Pij_estimate(map_class, ref_class)[0]
-        return pd.DataFrame(matrix, columns=all_map_classes,
-                index=all_map_classes)
+        return pd.DataFrame(matrix, columns=all_classes, index=all_classes)
 
     def area(self, i):
         """ estimate the total area of class k """
         pij, se = self.Pij_estimate(i, i)
         return self.N * pij, self.N * se
-        # pka, se = self.PkA_estimate(i)
-        # return self.N * pka, self.N * se
         total_proportion = 0
         total_var = 0
         for j in np.unique(self.ref_classes):
