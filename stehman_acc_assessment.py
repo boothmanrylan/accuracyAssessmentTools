@@ -1,6 +1,10 @@
 import pandas as pd
 import numpy as np
 
+from utils import users_accuracy_error, producers_accuracy_error
+
+from olofsson_acc_assessment import Olofsson2014AccAssessment
+
 class Stehman2014AccAssessment(): 
     """
     Based on:
@@ -168,24 +172,32 @@ class Stehman2014AccAssessment():
         """ users accuracy for class k """
         y_u = self._indicator_func() * self._indicator_func(map_val=k)
         x_u = self._indicator_func(map_val=k)
+        if np.sum(x_u) == 0:
+            users_accuracy_error(k)
         return self._design_consistent_estimator(y_u, x_u)
 
     def producers_accuracy(self, k):
         """ producers accuracy for class k """
         y_u = self._indicator_func() * self._indicator_func(ref_val=k)
         x_u = self._indicator_func(ref_val=k)
+        if np.sum(x_u) == 0:
+            producers_accuracy_error(k)
         return self._design_consistent_estimator(y_u, x_u)
 
     def commission_error_rate(self, k):
         """ commission error rate for class k """
         y_u = (self._indicator_func() == 0) * self._indicator_func(map_val=k)
         x_u = self._indicator_func(map_val=k)
+        if np.sum(x_u) == 0:
+            users_accuracy_error(k)
         return self._design_consistent_estimator(y_u, x_u)
 
     def omission_error_rate(self, k):
         """ omission error rate for class k """
         y_u = (self._indicator_func() == 0) * self._indicator_func(ref_val=k)
         x_u = self._indicator_func(ref_val=k)
+        if np.sum(x_u) == 0:
+            producers_accuracy_error(k)
         return self._design_consistent_estimator(y_u, x_u)
 
     def error_matrix(self):

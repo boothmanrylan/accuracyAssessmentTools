@@ -68,3 +68,13 @@ def pretty(matrix, class_names, total=False, accuracy=False):
     matrix.index = pd.MultiIndex.from_product([["Map"], class_names])
     matrix.columns = pd.MultiIndex.from_product([["Reference"], class_names])
     return matrix
+
+def users_accuracy_error(k):
+    msg = 'Cannot calculate user\'s accuracy/commission error rate '
+    msg += f'for class {k} as it never appears as a mapped value'
+    print(msg)
+
+def producers_accuracy_error(k):
+    msg = 'Cannot calculate producer\'s accuracy/ommission error rate '
+    msg += f'for class {k} as it never appears as a reference value'
+    print(msg)

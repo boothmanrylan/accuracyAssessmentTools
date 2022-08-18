@@ -2,6 +2,7 @@ import numpy as np
 import pandas as pd
 
 from utils import build_error_matrix, _expand_error_matrix
+from utils import users_accuracy_error, producers_accuracy_error
 
 class Olofsson2014AccAssessment():
     """
@@ -53,6 +54,8 @@ class Olofsson2014AccAssessment():
         """
         correct = self._error_matrix.loc[i, i]
         incorrect = np.sum(self._error_matrix.loc[i, self.all_map_classes])
+        if incorrect == 0:
+            users_accuracy_error(i)
         acc = correct / incorrect
         n_i = np.sum(self._error_matrix_counts.loc[i, self.all_map_classes])
         if n_i.astype(int) == 1:
@@ -70,6 +73,8 @@ class Olofsson2014AccAssessment():
         """
         correct = self._error_matrix.loc[j, j]
         incorrect = np.sum(self._error_matrix.loc[self.all_ref_classes, j])
+        if incorrect == 0:
+            producers_accuracy_error(j)
         acc = correct / incorrect
 
         N_hat_j = 0

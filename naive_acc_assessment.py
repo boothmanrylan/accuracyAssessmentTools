@@ -2,6 +2,7 @@ import numpy as np
 import pandas as pd
 
 from utils import build_error_matrix, _expand_error_matrix
+from utils import users_accuracy_error, producers_accuracy_error
 
 class NaiveAccAssessment():
     """
@@ -26,6 +27,8 @@ class NaiveAccAssessment():
     def users_accuracy(self, k):
         correct = self._error_matrix.loc[k, k]
         incorrect = self._error_matrix.loc[k, :].sum()
+        if incorrect == 0:
+            users_accuracy_error(k)
         return correct / incorrect, None
 
     def commission_error_rate(self, k):
@@ -34,6 +37,8 @@ class NaiveAccAssessment():
     def producers_accuracy(self, k):
         correct = self._error_matrix.loc[k, k]
         incorrect = self._error_matrix.loc[:, k].sum()
+        if incorrect == 0:
+            producers_accuracy_error(k)
         return correct / incorrect, None
 
     def omission_error_rate(self, k):
