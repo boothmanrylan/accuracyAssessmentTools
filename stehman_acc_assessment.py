@@ -67,7 +67,13 @@ class Stehman2014AccAssessment():
         selector = self.strata_classes == h
         n_star_h = np.sum(selector)
         y_bar_h = np.sum((y_u / n_star_h) * selector)
-        return np.sum((((y_u - y_bar_h) ** 2) / (n_star_h - 1)) * selector)
+        if n_star_h - 1 == 0:
+            # there will be a divide by zero runtime warning
+            # assume that the variance is zero since there is only one point
+            print(f'Stratum {h} has only one member, assuming var is 0')
+            return 0
+        else:
+            return np.sum((((y_u - y_bar_h) ** 2) / (n_star_h - 1)) * selector)
 
     def _se_Y_bar_hat(self, y_u, return_by_strata=False):
         """ equation 25 """
@@ -151,10 +157,16 @@ class Stehman2014AccAssessment():
             y_bar_h = np.sum(y_u * selector) / n_star_h
             x_bar_h = np.sum(x_u * selector) / n_star_h
 
-            # equation 29
-            s_xyh = np.sum(
-                selector * (y_u - y_bar_h) * (x_u - x_bar_h) / (n_star_h - 1)
-            )
+            if n_star_h - 1 == 0:
+                # there will be a divide by zero warning 
+                # assume the sample covariance is 0 since there is only one
+                # point
+                s_xyh = 0
+                print(f'Stratum {h} has only one member, assuming var is 0')
+            else: 
+                # equation 29
+                a = selector * (y_u - y_bar_h) * (x_u - x_bar_h)
+                s_xyh = np.sum(a / (n_star_h - 1))
 
             a = N_star_h ** 2
             b = 1 - (n_star_h / N_star_h) # can be skipped b/c ~1
