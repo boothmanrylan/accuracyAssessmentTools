@@ -27,12 +27,12 @@ class Stehman2014AccAssessment():
         self.ref_classes = data[ref_col].values
         self.strata_classes = data[strata_col].values
 
-        self.N = np.sum(list(strata_population.values()))
-
         self.strata_population = {
             k: v for k, v in iter(strata_population.items())
             if k in np.unique(self.strata_classes)
         }
+
+        self.N = np.sum(list(self.strata_population.values()))
 
     def _indicator_func(self, map_val=None, ref_val=None):
         """ Calculate the indicator function y_u """
