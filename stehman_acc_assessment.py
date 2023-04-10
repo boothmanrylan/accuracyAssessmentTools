@@ -223,20 +223,38 @@ class Stehman2014AccAssessment():
                 matrix[i, j] = self.Pij_estimate(map_class, ref_class)[0]
         return pd.DataFrame(matrix, columns=all_classes, index=all_classes)
 
-    def area(self, i):
-        """ estimate the total area of class k """
-        pij, se = self.Pij_estimate(i, i)
-        return self.N * pij, self.N * se
-        total_proportion = 0
-        total_var = 0
-        for j in np.unique(self.ref_classes):
-            pij, se = self.Pij_estimate(i, j)
-            total_proportion += pij
-            total_var += (se ** 2)
-        return self.N * total_proportion, self.N * np.sqrt(total_var)
+    def area(self, i, mapped=False, reference=True, correct=False):
+        """ estimate the area of class i
+        
+        If mapped is true, returns the area that was mapped as class i.
+        If reference is true, returns the estimate of the true area of class i.
+        If correct is true, returns the estimate of the area that was correctly
+        mapped as class i.
+        """
+        try:
+            assert(sum([int(mapped), int(reference), int(correct)]) == 1)
+        except AssertionError as E:
+            msg = "exactly 1 of mapped, reference, and correct must be true"
+            raise ValueError(msg) from E
+        
+        if mapped:
+            raise NotImplementedError
 
-    def area_by_strata(self, i, mapped=False, reference=False, correct=False):
-        """ estimate the area of class i within each of the strata """
+        if reference:
+            return self.PkA_estimate(i, return_area=True)
+
+        if correct:
+            pij, se = self.Pij_estimate(i, i)
+            return self.N * pij, self.N * se
+
+    def area_by_strata(self, i, mapped=False, reference=True, correct=False):
+        """ estimate the area of class i within each of the strata
+
+        If mapped is true, returns the area that was mapped as class i.
+        If reference is true, returns the estimate of the true area of class i.
+        If correct is true, returns the estimate of the area that was correctly
+        mapped as class i.
+        """
         try:
             assert(sum([int(mapped), int(reference), int(correct)]) == 1)
         except AssertionError as E:
