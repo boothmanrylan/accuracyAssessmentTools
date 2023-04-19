@@ -1,10 +1,10 @@
 import numpy as np
 import pandas as pd
 
-from utils import build_error_matrix, _expand_error_matrix
-from utils import users_accuracy_error, producers_accuracy_error
+from acc_assessment.utils import build_error_matrix, _expand_error_matrix
+from acc_assessment.utils import users_accuracy_error, producers_accuracy_error
 
-class NaiveAccAssessment():
+class Congalton():
     """
     Calculates users/producers/overall accuracy from an error matrix without
     considering the proportion of mapped area of each class.
@@ -51,31 +51,3 @@ class NaiveAccAssessment():
         msg = "can't estimate area of a class from the error matrix alone"
         raise NotImplementedError(msg)
 
-def test():
-    data = [[65, 4, 22, 24], [6, 81, 5, 8], [0, 11, 85, 19], [4, 7, 3, 90]]
-    classes = ["D", "C", "BA", "SB"]
-    df = pd.DataFrame(data, index=classes, columns=classes)
-    input_df = _expand_error_matrix(df, "map", "ref")
-
-    assessment = NaiveAccAssessment(input_df, "map", "ref")
-
-    # ========================================================
-    # THESE ARE THE VALUES FROM THE PAPER
-    # ========================================================
-    expected_overall = 0.74
-    expected_prods = {"D": 0.87, "C": 0.79, "BA": 0.74, "SB": 0.64}
-    expected_users = {"D": 0.57, "C": 0.81, "BA": 0.74, "SB": 0.87}
-
-    overall = assessment.overall_accuracy()[0]
-    print(f"Overall Acc: {overall:.2f} | EXPECTED: {expected_overall}")
-
-    for k in classes:
-        users = assessment.users_accuracy(k)[0]
-        print(f"Users Acc {k}: {users:.2f} | EXPECTED: {expected_users[k]}")
-
-    for k in classes:
-        prods = assessment.producers_accuracy(k)[0]
-        print(f"Prods Acc {k}: {prods:.2f} | EXPECTED: {expected_prods[k]}")
-
-if __name__ == '__main__':
-    test()

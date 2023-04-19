@@ -1,0 +1,17 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "acc_assessment"
+version = "0.0.1"
+authors = [{name = "Rylan Boothman"}]
+description = "Tools to help with remote sensing accuracy assessment"
+dependencies = [
+    "pandas",
+    "numpy",
+]
+
+[project.urls]
+"Homepage" = "https://github.com/boothmanrylan/accuracyAssessmentTools"
+

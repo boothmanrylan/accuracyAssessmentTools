@@ -23,9 +23,11 @@ verify that the math is being done properly, e.g.
 
 ## Usage Example
 
+After running `pip install . ` from the root directory:
+
 ```python
 import pandas as pd
-from olofsson_acc_assessment import Olofsson2014AccAssessment as Olofsson
+from acc_assessment.olofsson import Olofsson
 
 data = pd.read_csv("/path/to/file/containing/assessment/points.csv")
 

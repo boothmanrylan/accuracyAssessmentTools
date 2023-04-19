@@ -1,11 +1,9 @@
 import pandas as pd
 import numpy as np
 
-from utils import users_accuracy_error, producers_accuracy_error
+from acc_assessment.utils import users_accuracy_error, producers_accuracy_error
 
-from olofsson_acc_assessment import Olofsson2014AccAssessment
-
-class Stehman2014AccAssessment(): 
+class Stehman(): 
     """
     Based on:
     Stehman, S.V., 2014. "Estimating area and map accuracy for stratified
@@ -73,7 +71,8 @@ class Stehman2014AccAssessment():
             print(f'Stratum {h} has only one member, assuming var is 0')
             return 0
         else:
-            return np.sum((((y_u - y_bar_h) ** 2) / (n_star_h - 1)) * selector)
+            output = np.sum((((y_u - y_bar_h) ** 2) / (n_star_h - 1)) * selector)
+            return output
 
     def _se_Y_bar_hat(self, y_u, return_by_strata=False):
         """ equation 25 """
@@ -272,53 +271,3 @@ class Stehman2014AccAssessment():
             return {k: (self.N * p, self.N * s) for k, v in iter(ses.items())}
 
 
-def test():
-    df = pd.read_csv("./stehman2014_table2.csv", skiprows=1)
-    stratum_totals = {1: 40000, 2: 30000, 3: 20000, 4: 10000}
-    assessment = Stehman2014AccAssessment(
-        df, "Stratum", "Map class", "Reference class", stratum_totals
-    )
-
-    # ===============================================================
-    # THESE ARE THE VALUES GIVEN IN THE PAPER
-    # ==============================================================
-    prop_class_A = 0.35
-    prop_class_C = 0.20
-    overall_accuracy = 0.63
-    users_class_B = 0.574
-    producers_class_B = 0.794
-    cell_2_3 = 0.08
-    se_prop_class_A = 0.082
-    se_prop_class_C = 0.064
-    se_overall_accuracy = 0.085
-    se_users_class_B = 0.125
-    se_producers_class_B = 0.114
-
-    test, se = assessment.PkA_estimate("A")
-    print(f"Area of class A:\t{test:.3f}, SE: {se:.3f}", end=" | ")
-    print(f"EXPECTED: {prop_class_A}, {se_prop_class_A}")
-
-    test, se = assessment.PkA_estimate("C")
-    print(f"Area of class C:\t{test:.3f}, SE: {se:.3f}", end=" | ")
-    print(f"EXPECTED: {prop_class_C}, {se_prop_class_C}")
-
-    test, se = assessment.overall_accuracy()
-    print(f"Overall Accuracy:\t{test:.3f}, SE: {se:.3f}", end=" | ")
-    print(f"EXPECTED: {overall_accuracy}, {se_overall_accuracy}")
-
-    test, se = assessment.users_accuracy("B")
-    print(f"User acc class B:\t{test:.3f}, SE: {se:.3f}", end=" | ")
-    print(f"EXPECTED: {users_class_B}, {se_users_class_B}")
-
-    test, se = assessment.producers_accuracy("B")
-    print(f"Producers Acc class B:\t{test:.3f}, SE: {se:.3f}", end=" | ")
-    print(f"EXPECTED: {producers_class_B}, {se_producers_class_B}")
-
-    test, se = assessment.Pij_estimate("B", "C")
-    print(f"Cell 2, 3 of error matrix: {test:.3f}, SE: {se:.3f}", end=" | ")
-    print(f"EXPECTED: {cell_2_3}, not given")
-
-    print("Error Matrix:\n", assessment.error_matrix())
-
-if __name__ == '__main__':
-    test()
