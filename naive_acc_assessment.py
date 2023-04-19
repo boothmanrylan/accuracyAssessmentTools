@@ -1,10 +1,8 @@
 import numpy as np
 import pandas as pd
 
-from accuracyAssessmentTools.utils import build_error_matrix
-from accuracyAssessmentTools.utils import _expand_error_matrix
-from accuracyAssessmentTools.utils import users_accuracy_error
-from accuracyAssessmentTools.utils import producers_accuracy_error
+from utils import build_error_matrix, _expand_error_matrix
+from utils import users_accuracy_error, producers_accuracy_error
 
 class NaiveAccAssessment():
     """
