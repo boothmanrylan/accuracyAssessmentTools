@@ -1,9 +1,8 @@
 import pandas as pd
 import numpy as np
 
-from utils import users_accuracy_error, producers_accuracy_error
-
-from olofsson_acc_assessment import Olofsson2014AccAssessment
+from accuracyAssessmentTools.utils import users_accuracy_error
+from accuracyAssessmentTools.utils import producers_accuracy_error
 
 class Stehman2014AccAssessment(): 
     """
