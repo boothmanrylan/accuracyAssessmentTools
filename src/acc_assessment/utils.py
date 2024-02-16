@@ -37,7 +37,7 @@ def pretty(matrix, class_names, total=False, accuracy=False):
         raise ValueError(msg) from E
 
     if total:
-       matrix = matrix.append(matrix.sum(0), ignore_index=True) 
+       matrix = matrix.append(matrix.sum(0), ignore_index=True)
        matrix = matrix.T.append(matrix.sum(1), ignore_index=True).T
        matrix.index = pd.MultiIndex.from_product([
            ["Map"], class_names + ["Total"]
@@ -78,3 +78,32 @@ def producers_accuracy_error(k):
     msg = 'Cannot calculate producer\'s accuracy/ommission error rate '
     msg += f'for class {k} as it never appears as a reference value'
     print(msg)
+
+def shannon_evenness(X):
+    """ compute the shannon evenness of X
+
+    Shannon evenness = (-sum xlnx for x in X) / (ln size of x)
+
+    Args:
+        X: np.ndarray
+
+    Returns:
+        number
+    """
+    # y = xln(x) approaches 0 when x approaches 0
+    # can therefore replace ln(x) with 0 when x == 0
+    lnX = np.log(X, out=np.zeros_like(X), where=(X != 0))
+    return -1 * np.divide(np.sum(X * lnX), np.log(X.shape[0]))
+
+def shannon_diversity(X):
+    """ compute the shannon diversity of X
+
+    Shannon diversity = 1 - shannon evenness
+
+    Args:
+        X: np.ndarray
+
+    Returns:
+        number
+    """
+    return 1 - shannon_evenness(X)

@@ -32,26 +32,31 @@ class Stehman():
 
         self.N = np.sum(list(self.strata_population.values()))
 
+    def _calculate_n_star_h(self, selector):
+        return np.sum(selector)
+
     def _indicator_func(self, map_val=None, ref_val=None):
         """ Calculate the indicator function y_u """
         if map_val is not None and ref_val is None:
-            return self.map_classes == map_val
+            output = self.map_classes == map_val
         elif ref_val is not None and map_val is None:
-            return self.ref_classes == ref_val
+            output = self.ref_classes == ref_val
         elif ref_val is not None and map_val is not None:
             ref_matches = self.ref_classes == ref_val
             map_matches = self.map_classes == map_val
-            return ref_matches * map_matches
+            output = ref_matches * map_matches
         else:
-            return self.map_classes == self.ref_classes
+            output = self.map_classes == self.ref_classes
+        return output.astype(float)
 
     def _Y_bar_hat(self, y_u, return_by_strata=False):
         """ equation 3 """
         total = 0
         by_strata = {}
         for h, N_star_h in iter(self.strata_population.items()):
-            n_star_h = np.sum(self.strata_classes == h)
-            y_bar_h = np.sum(y_u * (self.strata_classes == h)) / n_star_h
+            selector = (self.strata_classes == h).astype(float)
+            n_star_h = self._calculate_n_star_h(selector)
+            y_bar_h = np.sum(y_u * selector) / n_star_h
             curr = N_star_h * y_bar_h / self.N
             total += curr
             by_strata[h] = curr
@@ -63,7 +68,7 @@ class Stehman():
     def _sample_var_Y_bar_hat(self, y_u, h):
         """ equation 26 """
         selector = self.strata_classes == h
-        n_star_h = np.sum(selector)
+        n_star_h = self._calculate_n_star_h(selector)
         y_bar_h = np.sum((y_u / n_star_h) * selector)
         if n_star_h - 1 == 0:
             # there will be a divide by zero runtime warning
@@ -85,7 +90,7 @@ class Stehman():
         total = 0
         by_strata = {}
         for h, N_star_h in iter(self.strata_population.items()):
-            n_star_h = np.sum(self.strata_classes == h)
+            n_star_h = self._calculate_n_star_h(self.strata_classes == h)
             s2_yh = self._sample_var_Y_bar_hat(y_u, h)
             a = N_star_h ** 2
             b = 1 - (n_star_h / N_star_h) # can be skipped b/c ~1
@@ -149,7 +154,7 @@ class Stehman():
             s2_yh = self._sample_var_Y_bar_hat(y_u, h)
             s2_xh = self._sample_var_Y_bar_hat(x_u, h)
 
-            n_star_h = np.sum(selector)
+            n_star_h = self._calculate_n_star_h(selector)
 
             X_hat += N_star_h * np.sum(x_u * selector) / n_star_h
 
