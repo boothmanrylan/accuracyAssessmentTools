@@ -59,8 +59,11 @@ class Cardille(Stehman):
         ref_scores = ref_data.apply(score_function, axis=1, raw=True)
         self.point_weights = combine_function(map_scores, ref_scores)
 
-        self.map_classes = map_data.apply(np.argmax, axis=1, raw=True).values
-        self.ref_classes = ref_data.apply(np.argmax, axis=1, raw=True).values
+        def get_class_name(class_probs):
+            return class_names[np.argmax(class_probs)]
+
+        self.map_classes = map_data.apply(get_class_name, axis=1, raw=True).values
+        self.ref_classes = ref_data.apply(get_class_name, axis=1, raw=True).values
 
         self.strata_population = {
             k: v for k, v in iter(strata_population.items())
