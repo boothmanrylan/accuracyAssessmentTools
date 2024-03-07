@@ -8,7 +8,7 @@ def assessment():
     return Stehman(
         pd.read_csv("./tests/stehman2014_table2.csv", skiprows=1),
         "Stratum",
-        "Map class", 
+        "Map class",
         "Reference class",
         {1: 40000, 2: 30000, 3: 20000, 4: 10000}
     )
