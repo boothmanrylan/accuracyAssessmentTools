@@ -29,6 +29,62 @@ def _expand_error_matrix(mat, map_col, ref_col):
                 ref_values.append(mat.index[j])
     return pd.DataFrame({map_col: map_values, ref_col: ref_values})
 
+def _expand_probabilities(data, map_col, ref_col, strata_col, id_col=None):
+    """
+    Converts a dataframe with a column containing the map class and a column
+    containing the reference class into two dataframes one containing the
+    one-hot encoded map classes and one containing the one-hot encoded ref
+    classes
+
+    Args:
+        data: pd.DataFrame
+        map_col: str, name of column in data that contains the map classes
+        ref_col: str, name of column in data that contains the ref classes
+        strata_col: str, name of column in data that contains the stratum a
+            poin was sampled from.
+        id_col: str, name of column in data that contains the unique id of the
+            point, if not given row numbers are used as ids in a new column
+            with the name "id".
+    
+    Returns:
+        2-tuple of pd.DataFrames (map dataframe, reference dataframe)
+    """
+    # TODO: need a fallback if one of these is missing some class values,
+    # ideally without adding another dependency besides pandas
+    # For now just check that both the ref and the map contain the same unique
+    # class values
+    map_classes = pd.get_dummies(data[map_col])
+    ref_classes = pd.get_dummies(data[ref_col])
+    unique_class_vals = data[map_col].unique().sort()
+    unique_ref_vals = data[ref_col].unique().sort()
+    msg = "pd.get_dummies will fail b/c a class in ref is not represented in map"
+    assert np.all(unique_class_vals == unique_ref_vals), msg
+
+    strata_classes = data[strata_col]
+    if id_col is not None:
+        ids = data[id_col]
+    else:
+        id_col = "id"
+        ids = data.index
+
+    map_df = pd.concat(
+        [
+            map_classes,
+            pd.DataFrame({strata_col: strata_classes, id_col: ids})
+        ],
+        axis=1,
+    )
+
+    ref_df = pd.concat(
+        [
+            ref_classes,
+            pd.DataFrame({strata_col: strata_classes, id_col: ids})
+        ],
+        axis=1,
+    )
+
+    return map_df, ref_df
+
 def pretty(matrix, class_names, total=False, accuracy=False):
     try:
         assert not (total and accuracy)
@@ -92,6 +148,7 @@ def shannon_evenness(X):
     """
     # y = xln(x) approaches 0 when x approaches 0
     # can therefore replace ln(x) with 0 when x == 0
+    X = X.astype(np.float32)
     lnX = np.log(X, out=np.zeros_like(X), where=(X != 0))
     return -1 * np.divide(np.sum(X * lnX), np.log(X.shape[0]))
 
