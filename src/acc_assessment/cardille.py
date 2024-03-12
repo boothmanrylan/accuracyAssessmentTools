@@ -80,3 +80,10 @@ class Cardille(Stehman):
 
     def _calculate_n_star_h(self, selector):
         return np.sum(selector.astype(float) * self.point_weights)
+
+    def _design_consistent_estimator(self, y_u, x_u):
+        y_u *= self.point_weights
+        x_u *= self.point_weights
+        R = self._R_hat(y_u, x_u)
+        var = self._var_R_hat(y_u, x_u)
+        return R, np.sqrt(var)
