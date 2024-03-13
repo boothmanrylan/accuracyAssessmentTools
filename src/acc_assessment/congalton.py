@@ -10,8 +10,8 @@ class Congalton():
     considering the proportion of mapped area of each class.
 
     Based on:
-    "A Review of Assessing the Accuracy of Classifications of Remotely 
-    Sensed Data", Congalton, R. G., 1991. Remote Sensing of Environment, 
+    "A Review of Assessing the Accuracy of Classifications of Remotely
+    Sensed Data", Congalton, R. G., 1991. Remote Sensing of Environment,
     Vol. 37. pp 35-46 https://doi.org/10.106/0034-4257(91)90048-B
     """
     def __init__(self, data, map_class, ref_class):

@@ -87,3 +87,15 @@ class Cardille(Stehman):
         R = self._R_hat(y_u, x_u)
         var = self._var_R_hat(y_u, x_u)
         return R, np.sqrt(var)
+
+    def _counts_error_matrix(self):
+        """ returns error matrix of point counts """
+        all_map_classes = np.unique(self.map_classes)
+        all_ref_classes = np.unique(self.ref_classes)
+        all_classes = np.unique(np.hstack([all_map_classes, all_ref_classes]))
+        matrix = np.zeros((all_classes.shape[0], all_classes.shape[0]))
+        for i, map_class in enumerate(all_classes):
+            for j, ref_class in enumerate(all_classes):
+                indicator = self._indicator_func(map_val=map_class, ref_val=ref_class)
+                matrix[i, j] = np.sum(indicator * self.point_weights)
+        return pd.DataFrame(matrix, columns=all_classes, index=all_classes)

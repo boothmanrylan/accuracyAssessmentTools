@@ -7,7 +7,7 @@ from acc_assessment.utils import users_accuracy_error, producers_accuracy_error
 class Olofsson():
     """
     Based on:
-    Olofsson, P., et al., 2014 "Good practices for estimating area and   
+    Olofsson, P., et al., 2014 "Good practices for estimating area and
     assessing accuracy of land change", Remote Sensing of Environment. Vol
     148 pp. 42-57 10.1016/j.rse.2014/02/015
     """
@@ -130,6 +130,9 @@ class Olofsson():
         p_k, se = self.proportion_area(k)
         return self.N * p_k, self.N * se
 
-    def error_matrix(self):
-        return self._error_matrix
+    def error_matrix(self, proportions=True):
+        if proportions:
+            return self._error_matrix
+        else:
+            return self._error_matrix_counts
 

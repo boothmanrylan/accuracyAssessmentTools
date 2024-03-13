@@ -216,7 +216,7 @@ class Stehman():
             producers_accuracy_error(k)
         return self._design_consistent_estimator(y_u, x_u)
 
-    def error_matrix(self):
+    def _proportions_error_matrix(self):
         """ returns error matrix of class proportions """
         all_map_classes = np.unique(self.map_classes)
         all_ref_classes = np.unique(self.ref_classes)
@@ -227,9 +227,27 @@ class Stehman():
                 matrix[i, j] = self.Pij_estimate(map_class, ref_class)[0]
         return pd.DataFrame(matrix, columns=all_classes, index=all_classes)
 
+    def _counts_error_matrix(self):
+        """ returns error matrix of point counts """
+        all_map_classes = np.unique(self.map_classes)
+        all_ref_classes = np.unique(self.ref_classes)
+        all_classes = np.unique(np.hstack([all_map_classes, all_ref_classes]))
+        matrix = np.zeros((all_classes.shape[0], all_classes.shape[0]))
+        for i, map_class in enumerate(all_classes):
+            for j, ref_class in enumerate(all_classes):
+                indicator = self._indicator_func(map_val=map_class, ref_val=ref_class)
+                matrix[i, j] = np.sum(indicator)
+        return pd.DataFrame(matrix, columns=all_classes, index=all_classes)
+
+    def error_matrix(self, proportions=True):
+        if proportions:
+            return self._proportions_error_matrix()
+        else:
+            return self._counts_error_matrix()
+
     def area(self, i, mapped=False, reference=True, correct=False):
         """ estimate the area of class i
-        
+
         If mapped is true, returns the area that was mapped as class i.
         If reference is true, returns the estimate of the true area of class i.
         If correct is true, returns the estimate of the area that was correctly
@@ -240,7 +258,7 @@ class Stehman():
         except AssertionError as E:
             msg = "exactly 1 of mapped, reference, and correct must be true"
             raise ValueError(msg) from E
-        
+
         if mapped:
             raise NotImplementedError
 
@@ -275,4 +293,17 @@ class Stehman():
             pijs, ses = self.Pij(i, i, return_by_strata=True)
             return {k: (self.N * p, self.N * s) for k, v in iter(ses.items())}
 
-
+#     def _val_se(self, value, standard_error):
+#         return f"{value} +/- {standard_error}"
+#
+#     def __repr__(self):
+#         output_string = "Overall Accuracy: {_val_se(self.overall_accuracy())}\n"
+#         output_string += "\n==========\nUSER's ACCURACIES\n==========\n"
+#         for c in all_classes:
+#             output_string += f"{c}: {_val_se(self.users_accuracy(c))}\n"
+#         output_string += "\n==========\nPRODUCER's ACCURACIES\n==========\n"
+#         for c in all_classes:
+#             output_string += f"{c}: {_val_se(self.producers_accuracy(c))}\n"
+#
+#     def __str__(self):
+#         return self.__repr__()
