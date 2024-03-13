@@ -100,19 +100,50 @@ class TestCardilleSameAsStehman():
         ]
         assert np.allclose(cardille_prods, stehman_prods)
 
-# assessment = Cardille(
-#     pd.read_csv("~/school/accuracyAssessmentTools/tests/map_data_table.csv"),
-#     pd.read_csv("~/school/accuracyAssessmentTools/tests/ref_data_table.csv"),
-#     id_col="id",
-#     strata_col="strata",
-#     strata_population={"a": 500000, "f": 500000, "w": 5000},
-# )
-# print(assessment.point_weights)
-# print("ag producers", assessment.producers_accuracy(0))
-# print("ag users", assessment.users_accuracy(0))
-# print("f producers", assessment.producers_accuracy(1))
-# print("f users", assessment.users_accuracy(1))
-# print("w producers", assessment.producers_accuracy(2))
-# print("w users", assessment.users_accuracy(2))
-# print(assessment.error_matrix())
-# print(np.sum(np.sum(assessment.error_matrix())))
+@pytest.fixture
+def example_cardille_assessment():
+    data = pd.read_csv("./tests/cardille_table.csv", skiprows=1)
+    ref_data = data.filter(like='.').copy()
+    model_data = data.drop(ref_data.columns, axis=1)
+    ref_data.columns = [x.split('.')[0] for x in ref_data.columns]
+
+    stratum = model_data.apply(np.argmax, axis=1)  # strata == class
+    uid = np.arange(model_data.shape[0])
+    model_data['stratum'] = stratum
+    model_data['id'] = uid
+    ref_data['stratum'] = stratum
+    ref_data['id'] = uid
+
+    strata_pop = {0: 100, 1: 100, 2: 100}  # assume classes evenly weighted
+
+    return Cardille(
+        model_data,
+        ref_data,
+        id_col='id',
+        strata_col='stratum',
+        strata_population=strata_pop
+    )
+
+def test_spreadsheet_users_acc_0(example_cardille_assessment):
+    val, _ = example_cardille_assessment.users_accuracy("Class 1")
+    check_within_tolerance(val, 0.932)
+
+def test_spreadsheet_users_acc_1(example_cardille_assessment):
+    val, _ = example_cardille_assessment.users_accuracy("Class 2")
+    check_within_tolerance(val, 0.895)
+
+def test_spreadsheet_users_acc_2(example_cardille_assessment):
+    val, _ = example_cardille_assessment.users_accuracy("Class 3")
+    check_within_tolerance(val, 0.982)
+
+def test_spreadsheet_producers_acc_0(example_cardille_assessment):
+    val, _ = example_cardille_assessment.producers_accuracy("Class 1")
+    check_within_tolerance(val, 0.953)
+
+def test_spreadsheet_producers_acc_1(example_cardille_assessment):
+    val, _ = example_cardille_assessment.producers_accuracy("Class 2")
+    check_within_tolerance(val, 0.920)
+
+def test_spreadsheet_producers_acc_2(example_cardille_assessment):
+    val, _ = example_cardille_assessment.producers_accuracy("Class 3")
+    check_within_tolerance(val, 0.901)
