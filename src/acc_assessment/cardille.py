@@ -64,6 +64,9 @@ class Cardille(Stehman):
 
         self.map_classes = map_data.apply(get_class_name, axis=1, raw=True).values
         self.ref_classes = ref_data.apply(get_class_name, axis=1, raw=True).values
+        self.all_classes = np.unique(np.concatenate(
+            (self.map_classes, self.ref_classes)
+        ))
 
         self.strata_population = {
             k: v for k, v in iter(strata_population.items())

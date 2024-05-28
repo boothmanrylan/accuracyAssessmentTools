@@ -3,8 +3,9 @@ import pandas as pd
 
 from acc_assessment.utils import build_error_matrix
 from acc_assessment.utils import users_accuracy_error, producers_accuracy_error
+from acc_assessment.utils import AccuracyAssessment
 
-class Olofsson():
+class Olofsson(AccuracyAssessment):
     """
     Based on:
     Olofsson, P., et al., 2014 "Good practices for estimating area and
@@ -89,11 +90,6 @@ class Olofsson():
             N_hat_j += (N_i / n_i) * n_ij
 
             if i != j:
-                print(f"{i}, {j}")
-                print(f"N_i: {N_i}")
-                print(f"n_ij: {n_ij}")
-                print(f"n_i: {n_i}")
-                print('\n')
                 b += (N_i ** 2) * (n_ij / n_i) * ((1 - (n_ij / n_i)) / (n_i - 1))
 
         N_j = self.mapped_proportions[j]
@@ -102,8 +98,6 @@ class Olofsson():
 
         a = ((N_j ** 2) * ((1 - acc) ** 2) * users_acc * (1 - users_acc))
         a /= n_j - 1
-
-        print(N_hat_j)
 
         var = (1 / (N_hat_j ** 2)) * (a + ((acc ** 2) * b))
         return acc, np.sqrt(var)

@@ -164,3 +164,33 @@ def shannon_diversity(X):
         number
     """
     return 1 - shannon_evenness(X)
+
+class AccuracyAssessment():
+    """Base class for all assessment types.
+    """
+    def __repr__(self):
+        def val_se(value, standard_error):
+            output = f"{value:.4f}"
+            if standard_error is not None:
+                output += f"  +/- {standard_error:.4f}"
+            return output
+
+        seperator = "\n" + ("=" * 40) + "\n"
+
+        output_string = seperator + "\tOVERALL ACCURACY" + seperator
+        output_string += f"{val_se(*self.overall_accuracy())}\n"
+
+        output_string += seperator + "\tUSER'S ACCURACIES" + seperator
+        for c in self.all_classes:
+            output_string += f"{c}:\t{val_se(*self.users_accuracy(c))}\n"
+
+        output_string += seperator + "\tPRODUCER'S ACCURACIES" + seperator
+        for c in self.all_classes:
+            output_string += f"{c}:\t{val_se(*self.producers_accuracy(c))}\n"
+
+        output_string += seperator + "\tERROR MATRIX" + seperator
+        output_string += repr(self.error_matrix())
+        return output_string
+
+    def __str__(self):
+        return repr(self)

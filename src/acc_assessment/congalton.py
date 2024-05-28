@@ -3,8 +3,9 @@ import pandas as pd
 
 from acc_assessment.utils import build_error_matrix, _expand_error_matrix
 from acc_assessment.utils import users_accuracy_error, producers_accuracy_error
+from acc_assessment.utils import AccuracyAssessment
 
-class Congalton():
+class Congalton(AccuracyAssessment):
     """
     Calculates users/producers/overall accuracy from an error matrix without
     considering the proportion of mapped area of each class.

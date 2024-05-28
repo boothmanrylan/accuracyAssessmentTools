@@ -2,8 +2,9 @@ import pandas as pd
 import numpy as np
 
 from acc_assessment.utils import users_accuracy_error, producers_accuracy_error
+from acc_assessment.utils import AccuracyAssessment
 
-class Stehman(): 
+class Stehman(AccuracyAssessment):
     """
     Based on:
     Stehman, S.V., 2014. "Estimating area and map accuracy for stratified
@@ -23,6 +24,9 @@ class Stehman():
         """
         self.map_classes = data[map_col].values
         self.ref_classes = data[ref_col].values
+        self.all_classes = np.unique(np.concatenate(
+            (self.map_classes, self.ref_classes)
+        ))
         self.strata_classes = data[strata_col].values
 
         self.strata_population = {
@@ -162,12 +166,12 @@ class Stehman():
             x_bar_h = np.sum(x_u * selector) / n_star_h
 
             if n_star_h - 1 == 0:
-                # there will be a divide by zero warning 
+                # there will be a divide by zero warning
                 # assume the sample covariance is 0 since there is only one
                 # point
                 s_xyh = 0
                 print(f'Stratum {h} has only one member, assuming var is 0')
-            else: 
+            else:
                 # equation 29
                 a = selector * (y_u - y_bar_h) * (x_u - x_bar_h)
                 s_xyh = np.sum(a / (n_star_h - 1))
@@ -218,26 +222,20 @@ class Stehman():
 
     def _proportions_error_matrix(self):
         """ returns error matrix of class proportions """
-        all_map_classes = np.unique(self.map_classes)
-        all_ref_classes = np.unique(self.ref_classes)
-        all_classes = np.unique(np.hstack([all_map_classes, all_ref_classes]))
-        matrix = np.zeros((all_classes.shape[0], all_classes.shape[0]))
-        for i, map_class in enumerate(all_classes):
-            for j, ref_class in enumerate(all_classes):
+        matrix = np.zeros((self.all_classes.shape[0], self.all_classes.shape[0]))
+        for i, map_class in enumerate(self.all_classes):
+            for j, ref_class in enumerate(self.all_classes):
                 matrix[i, j] = self.Pij_estimate(map_class, ref_class)[0]
-        return pd.DataFrame(matrix, columns=all_classes, index=all_classes)
+        return pd.DataFrame(matrix, columns=self.all_classes, index=self.all_classes)
 
     def _counts_error_matrix(self):
         """ returns error matrix of point counts """
-        all_map_classes = np.unique(self.map_classes)
-        all_ref_classes = np.unique(self.ref_classes)
-        all_classes = np.unique(np.hstack([all_map_classes, all_ref_classes]))
-        matrix = np.zeros((all_classes.shape[0], all_classes.shape[0]))
-        for i, map_class in enumerate(all_classes):
-            for j, ref_class in enumerate(all_classes):
+        matrix = np.zeros((self.all_classes.shape[0], self.all_classes.shape[0]))
+        for i, map_class in enumerate(self.all_classes):
+            for j, ref_class in enumerate(self.all_classes):
                 indicator = self._indicator_func(map_val=map_class, ref_val=ref_class)
                 matrix[i, j] = np.sum(indicator)
-        return pd.DataFrame(matrix, columns=all_classes, index=all_classes)
+        return pd.DataFrame(matrix, columns=self.all_classes, index=self.all_classes)
 
     def error_matrix(self, proportions=True):
         if proportions:
@@ -292,18 +290,3 @@ class Stehman():
         if correct:
             pijs, ses = self.Pij(i, i, return_by_strata=True)
             return {k: (self.N * p, self.N * s) for k, v in iter(ses.items())}
-
-#     def _val_se(self, value, standard_error):
-#         return f"{value} +/- {standard_error}"
-#
-#     def __repr__(self):
-#         output_string = "Overall Accuracy: {_val_se(self.overall_accuracy())}\n"
-#         output_string += "\n==========\nUSER's ACCURACIES\n==========\n"
-#         for c in all_classes:
-#             output_string += f"{c}: {_val_se(self.users_accuracy(c))}\n"
-#         output_string += "\n==========\nPRODUCER's ACCURACIES\n==========\n"
-#         for c in all_classes:
-#             output_string += f"{c}: {_val_se(self.producers_accuracy(c))}\n"
-#
-#     def __str__(self):
-#         return self.__repr__()
