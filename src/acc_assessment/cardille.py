@@ -78,8 +78,10 @@ class Cardille(Stehman):
     def _unbiased_estimator(self, y_u, return_by_strata=False):
         y_u *= self.point_weights
         Y = self._Y_bar_hat(y_u, return_by_strata)
-        se = self._se_Y_bar_hat(y_u, return_by_strata)
-        return Y, se
+        # se = self._se_Y_bar_hat(y_u, return_by_strata)
+        # For now, while we determine the proper method to calculate variance
+        # for the weighted accuracy assessment, return None
+        return Y, None
 
     def _calculate_n_star_h(self, selector):
         return np.sum(selector.astype(float) * self.point_weights)
@@ -88,8 +90,10 @@ class Cardille(Stehman):
         y_u *= self.point_weights
         x_u *= self.point_weights
         R = self._R_hat(y_u, x_u)
-        var = self._var_R_hat(y_u, x_u)
-        return R, np.sqrt(var)
+        # var = self._var_R_hat(y_u, x_u)
+        # For now, while we determine the proper method to calculate variance
+        # for the weighted accuracy assessment, return None
+        return R, None
 
     def _counts_error_matrix(self):
         """ returns error matrix of point counts """
