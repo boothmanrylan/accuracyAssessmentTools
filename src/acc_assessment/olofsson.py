@@ -13,23 +13,42 @@ class Olofsson(AccuracyAssessment):
     148 pp. 42-57 10.1016/j.rse.2014/02/015
     """
 
-    def __init__(self, data, map_col, ref_col, mapped_population):
-        mapped_classes = data[map_col].values
-        ref_classes = data[ref_col].values
+    def __init__(self, data, mapped_population, map_col=None, ref_col=None):
+        """
+        data: pd.DataFrame, either the error matrix or the long form table of
+            each pixel in the assessment
+        mapped_population: dict[str -> float], dictionary mapping each classes
+            to its total mapped area
+        map_col: str or None, the name of the column containing the map values
+            in data (only give this if data is in long form)
+        ref_col: str or None, the name of the column containing the reference
+            values in data (only give this if the data is in long form)
+        """
+        if map_col is not None and ref_col is not None:
+            # data is in long format i.e. each row is one pixel map and ref values
+            mapped_classes = data[map_col].values
+            ref_classes = data[ref_col].values
 
-        _all_classes = np.vstack([mapped_classes, ref_classes])
-        self.all_classes = np.unique(_all_classes)
-        self.all_map_classes = np.unique(mapped_classes)
-        self.all_ref_classes = np.unique(ref_classes)
+            _all_classes = np.vstack([mapped_classes, ref_classes])
+            self.all_classes = np.unique(_all_classes)
+            self.all_map_classes = np.unique(mapped_classes)
+            self.all_ref_classes = np.unique(ref_classes)
+
+            matrix = build_error_matrix(mapped_classes, ref_classes)
+            self._error_matrix_counts = matrix
+        else:
+            # data is already in error matrix format
+            self.all_map_classes = data.index
+            self.all_ref_classes = data.columns
+            self.all_classes = np.unique(np.vstack([data.index, data.columns]))
+            matrix = data
+            self._error_matrix_counts = data
 
         self.N = np.sum(list(mapped_population.values()))
         self.mapped_proportions = {
             k: v / self.N for k, v in iter(mapped_population.items())
             if k in self.all_classes
         }
-
-        matrix = build_error_matrix(mapped_classes, ref_classes)
-        self._error_matrix_counts = matrix
 
         # convert error matrix counts to proportions
         props_as_df = pd.DataFrame(

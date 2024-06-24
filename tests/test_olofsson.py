@@ -7,8 +7,8 @@ from utils import check_within_tolerance
 
 PIXELS_TO_HA = 200000 / 18000
 
-@pytest.fixture(autouse=True)
-def assessment():
+@pytest.fixture(autouse=True, params=[True, False])
+def assessment(request):
     data = {"Deforestation": [66, 0, 1, 2],
             "Forest gain": [0, 55, 0, 1],
             "Stable forest": [5, 8, 153, 9],
@@ -20,8 +20,11 @@ def assessment():
 
     df = pd.DataFrame(data)
     df.index = df.columns
-    input_df = _expand_error_matrix(df, "map", "ref")
-    return Olofsson(input_df, "map", "ref", mapped_area)
+    if request.param:
+        input_df = _expand_error_matrix(df, "map", "ref")
+        return Olofsson(input_df, mapped_area, "map", "ref")
+    else:
+        return Olofsson(df, mapped_area)
 
 def test_users_deforestation(assessment):
     val, _ = assessment.users_accuracy("Deforestation")
