@@ -6,6 +6,8 @@ from acc_assessment.stehman import Stehman
 from acc_assessment.utils import _expand_probabilities
 from utils import check_within_tolerance
 
+TOLERANCE = 1e-4
+
 def _scale_class_probs(df, max_prob=0.7):
     num_classes = df.shape[1]
     min_prob = (1 - max_prob) / (num_classes - 1)
@@ -107,14 +109,16 @@ def example_cardille_assessment():
     model_data = data.drop(ref_data.columns, axis=1)
     ref_data.columns = [x.split('.')[0] for x in ref_data.columns]
 
-    stratum = model_data.apply(np.argmax, axis=1)  # strata == class
+    # the spreadsheet does not account for class sizes therefore assume simple
+    # random sampling from the entire map
+    stratum = ["A"] * data.shape[0]
+    strata_pop = {"A": 100}
+
     uid = np.arange(model_data.shape[0])
     model_data['stratum'] = stratum
     model_data['id'] = uid
     ref_data['stratum'] = stratum
     ref_data['id'] = uid
-
-    strata_pop = {0: 100, 1: 100, 2: 100}  # assume classes evenly weighted
 
     return Cardille(
         model_data,
@@ -126,24 +130,24 @@ def example_cardille_assessment():
 
 def test_spreadsheet_users_acc_0(example_cardille_assessment):
     val, _ = example_cardille_assessment.users_accuracy("Class 1")
-    check_within_tolerance(val, 0.932)
+    check_within_tolerance(val, 0.9321, tolerance=TOLERANCE)
 
 def test_spreadsheet_users_acc_1(example_cardille_assessment):
     val, _ = example_cardille_assessment.users_accuracy("Class 2")
-    check_within_tolerance(val, 0.895)
+    check_within_tolerance(val, 0.8954, tolerance=TOLERANCE)
 
 def test_spreadsheet_users_acc_2(example_cardille_assessment):
     val, _ = example_cardille_assessment.users_accuracy("Class 3")
-    check_within_tolerance(val, 0.982)
+    check_within_tolerance(val, 0.9819, tolerance=TOLERANCE)
 
 def test_spreadsheet_producers_acc_0(example_cardille_assessment):
     val, _ = example_cardille_assessment.producers_accuracy("Class 1")
-    check_within_tolerance(val, 0.953)
+    check_within_tolerance(val, 0.9533, tolerance=TOLERANCE)
 
 def test_spreadsheet_producers_acc_1(example_cardille_assessment):
     val, _ = example_cardille_assessment.producers_accuracy("Class 2")
-    check_within_tolerance(val, 0.920)
+    check_within_tolerance(val, 0.9193, tolerance=TOLERANCE)
 
 def test_spreadsheet_producers_acc_2(example_cardille_assessment):
     val, _ = example_cardille_assessment.producers_accuracy("Class 3")
-    check_within_tolerance(val, 0.901)
+    check_within_tolerance(val, 0.9011, tolerance=TOLERANCE)
