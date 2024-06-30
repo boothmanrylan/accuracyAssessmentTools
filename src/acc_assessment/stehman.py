@@ -141,8 +141,10 @@ class Stehman(AccuracyAssessment):
         numerator_total = 0
         denominator_total = 0
         for h, N_star_h in iter(self.strata_population.items()):
-            y_bar_h = np.sum(y_u * (self.strata_classes == h))
-            x_bar_h = np.sum(x_u * (self.strata_classes == h))
+            selector = self.strata_classes == h
+            n_star_h = self._calculate_n_star_h(selector)
+            y_bar_h = np.sum(y_u * selector) / n_star_h
+            x_bar_h = np.sum(x_u * selector) / n_star_h
             numerator_total += N_star_h * y_bar_h
             denominator_total += N_star_h * x_bar_h
         return numerator_total / denominator_total
