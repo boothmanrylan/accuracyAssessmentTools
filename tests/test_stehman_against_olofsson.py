@@ -4,7 +4,7 @@ import numpy as np
 
 from acc_assessment.stehman import Stehman
 from acc_assessment.olofsson import Olofsson
-from acc_assessment.utils import _expand_error_matrix
+from acc_assessment.utils import expand_error_matrix
 
 
 TOLERANCE = 1e-4
@@ -25,7 +25,7 @@ def assessments():
     df = pd.DataFrame(data)
     df.index = df.columns
 
-    input_df = _expand_error_matrix(df, "map", "ref")
+    input_df = expand_error_matrix(df, "map", "ref")
 
     stehman_assessment = Stehman(
         input_df,
@@ -54,7 +54,6 @@ def test_overall(assessments):
 def test_overall_se(assessments):
     _, a = assessments["stehman"].overall_accuracy()
     _, b = assessments["olofsson"].overall_accuracy()
-    print(a, b)
     assert np.allclose(a, b, atol=1e-4)
 
 
@@ -69,7 +68,6 @@ def test_users(assessments, class_label):
 def test_users_se(assessments, class_label):
     _, a = assessments["stehman"].users_accuracy(class_label)
     _, b = assessments["olofsson"].users_accuracy(class_label)
-    print(a, b)
     assert np.allclose(a, b, atol=1e-4)
 
 
@@ -84,5 +82,4 @@ def test_producers(assessments, class_label):
 def test_producers_se(assessments, class_label):
     _, a = assessments["stehman"].producers_accuracy(class_label)
     _, b = assessments["olofsson"].producers_accuracy(class_label)
-    print(a, b)
     assert np.allclose(a, b, atol=1e-4)

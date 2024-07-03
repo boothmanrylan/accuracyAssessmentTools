@@ -43,7 +43,6 @@ def test_overall(assessments):
 def test_overall_se(assessments):
     _, a = assessments["stehman"].overall_accuracy()
     _, b = assessments["olofsson"].overall_accuracy()
-    print(a, b)
     assert np.allclose(a, b, atol=1e-4)
 
 
@@ -58,7 +57,6 @@ def test_users(assessments, class_label):
 def test_users_se(assessments, class_label):
     _, a = assessments["stehman"].users_accuracy(class_label)
     _, b = assessments["olofsson"].users_accuracy(class_label)
-    print(a, b)
     assert np.allclose(a, b, atol=1e-4)
 
 
@@ -73,5 +71,4 @@ def test_producers(assessments, class_label):
 def test_producers_se(assessments, class_label):
     _, a = assessments["stehman"].producers_accuracy(class_label)
     _, b = assessments["olofsson"].producers_accuracy(class_label)
-    print(a, b)
     assert np.allclose(a, b, atol=1e-4)

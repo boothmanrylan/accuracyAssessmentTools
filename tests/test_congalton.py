@@ -1,7 +1,7 @@
 import pytest
 import pandas as pd
 from acc_assessment.congalton import Congalton
-from acc_assessment.utils import _expand_error_matrix
+from acc_assessment.utils import expand_error_matrix
 from utils import check_within_tolerance
 
 @pytest.fixture(autouse=True)
@@ -9,7 +9,7 @@ def assessment():
     data = [[65, 4, 22, 24], [6, 81, 5, 8], [0, 11, 85, 19], [4, 7, 3, 90]]
     classes = ["D", "C", "BA", "SB"]
     df = pd.DataFrame(data, index=classes, columns=classes)
-    input_df = pd.DataFrame(_expand_error_matrix(df, "map", "ref"),)
+    input_df = pd.DataFrame(expand_error_matrix(df, "map", "ref"),)
     return Congalton(input_df, "map", "ref")
 
 def test_overall_acc(assessment):

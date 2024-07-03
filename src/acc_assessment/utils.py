@@ -1,11 +1,13 @@
 import numpy as np
 import pandas as pd
 
+
 def build_error_matrix(map_classes, ref_classes):
     all_classes = np.unique(np.vstack([map_classes, ref_classes]))
     num_classes = len(all_classes)
-    matrix = pd.DataFrame(np.zeros((num_classes, num_classes)),
-        index=all_classes, columns=all_classes)
+    matrix = pd.DataFrame(
+        np.zeros((num_classes, num_classes)), index=all_classes, columns=all_classes
+    )
     for i in all_classes:
         for j in all_classes:
             mapped = (map_classes == i).astype(int)
@@ -13,7 +15,8 @@ def build_error_matrix(map_classes, ref_classes):
             matrix.loc[i, j] = np.sum(mapped * ref)
     return matrix
 
-def _expand_error_matrix(mat, map_col, ref_col):
+
+def _expand_error_matrix(mat, map_col, ref_col, strata_col=None, strata_val=None):
     """
     Converts an error matrix into a dataframe of points' ref classes and map
     classes. Used to verify that we get the same results as the paper, while
@@ -27,7 +30,26 @@ def _expand_error_matrix(mat, map_col, ref_col):
             for _ in range(ij):
                 map_values.append(mat.index[i])
                 ref_values.append(mat.index[j])
-    return pd.DataFrame({map_col: map_values, ref_col: ref_values})
+    df = pd.DataFrame({map_col: map_values, ref_col: ref_values})
+
+    if strata_col is not None:
+        df[strata_col] = [strata_val] * df.shape[0]
+
+    return df
+
+
+def expand_error_matrix(mat, map_col, ref_col, strata_col=None):
+    if isinstance(mat, dict):
+        matrices = [
+                _expand_error_matrix(
+                    val, map_col, ref_col, strata_col=strata_col, strata_val=key
+                )
+                for key, val in mat.items()
+            ]
+        return pd.concat(matrices, ignore_index=True)
+    else:
+        return _expand_error_matrix(mat, map_col, ref_col)
+
 
 def _expand_probabilities(data, map_col, ref_col, strata_col, id_col=None):
     """
@@ -45,7 +67,7 @@ def _expand_probabilities(data, map_col, ref_col, strata_col, id_col=None):
         id_col: str, name of column in data that contains the unique id of the
             point, if not given row numbers are used as ids in a new column
             with the name "id".
-    
+
     Returns:
         2-tuple of pd.DataFrames (map dataframe, reference dataframe)
     """
@@ -68,22 +90,17 @@ def _expand_probabilities(data, map_col, ref_col, strata_col, id_col=None):
         ids = data.index
 
     map_df = pd.concat(
-        [
-            map_classes,
-            pd.DataFrame({strata_col: strata_classes, id_col: ids})
-        ],
+        [map_classes, pd.DataFrame({strata_col: strata_classes, id_col: ids})],
         axis=1,
     )
 
     ref_df = pd.concat(
-        [
-            ref_classes,
-            pd.DataFrame({strata_col: strata_classes, id_col: ids})
-        ],
+        [ref_classes, pd.DataFrame({strata_col: strata_classes, id_col: ids})],
         axis=1,
     )
 
     return map_df, ref_df
+
 
 def pretty(matrix, class_names, total=False, accuracy=False):
     try:
@@ -93,15 +110,13 @@ def pretty(matrix, class_names, total=False, accuracy=False):
         raise ValueError(msg) from E
 
     if total:
-       matrix = matrix.append(matrix.sum(0), ignore_index=True)
-       matrix = matrix.T.append(matrix.sum(1), ignore_index=True).T
-       matrix.index = pd.MultiIndex.from_product([
-           ["Map"], class_names + ["Total"]
-       ])
-       matrix.columns = pd.MultiIndex.from_product([
-            ["Reference"], class_names + ["Total"]
-       ])
-       return matrix
+        matrix = matrix.append(matrix.sum(0), ignore_index=True)
+        matrix = matrix.T.append(matrix.sum(1), ignore_index=True).T
+        matrix.index = pd.MultiIndex.from_product([["Map"], class_names + ["Total"]])
+        matrix.columns = pd.MultiIndex.from_product(
+            [["Reference"], class_names + ["Total"]]
+        )
+        return matrix
 
     if accuracy:
         true = np.diag(matrix)
@@ -113,30 +128,33 @@ def pretty(matrix, class_names, total=False, accuracy=False):
         matrix = matrix.append(users, ignore_index=True)
         matrix = matrix.T.append(producers_w_overall, ignore_index=True).T
 
-        matrix.index = pd.MultiIndex.from_product([
-            ["Map"], class_names + ["Producer's Acc."]
-        ])
-        matrix.columns = pd.MultiIndex.from_product([
-            ["Reference"], class_names + ["User's Acc."]
-        ])
+        matrix.index = pd.MultiIndex.from_product(
+            [["Map"], class_names + ["Producer's Acc."]]
+        )
+        matrix.columns = pd.MultiIndex.from_product(
+            [["Reference"], class_names + ["User's Acc."]]
+        )
         return matrix
 
     matrix.index = pd.MultiIndex.from_product([["Map"], class_names])
     matrix.columns = pd.MultiIndex.from_product([["Reference"], class_names])
     return matrix
 
+
 def users_accuracy_error(k):
-    msg = 'Cannot calculate user\'s accuracy/commission error rate '
-    msg += f'for class {k} as it never appears as a mapped value'
+    msg = "Cannot calculate user's accuracy/commission error rate "
+    msg += f"for class {k} as it never appears as a mapped value"
     print(msg)
+
 
 def producers_accuracy_error(k):
-    msg = 'Cannot calculate producer\'s accuracy/ommission error rate '
-    msg += f'for class {k} as it never appears as a reference value'
+    msg = "Cannot calculate producer's accuracy/ommission error rate "
+    msg += f"for class {k} as it never appears as a reference value"
     print(msg)
 
+
 def shannon_evenness(X):
-    """ compute the shannon evenness of X
+    """compute the shannon evenness of X
 
     Shannon evenness = (-sum xlnx for x in X) / (ln size of x)
 
@@ -152,8 +170,9 @@ def shannon_evenness(X):
     lnX = np.log(X, out=np.zeros_like(X), where=(X != 0))
     return -1 * np.divide(np.sum(X * lnX), np.log(X.shape[0]))
 
+
 def shannon_diversity(X):
-    """ compute the shannon diversity of X
+    """compute the shannon diversity of X
 
     Shannon diversity = 1 - shannon evenness
 
@@ -165,9 +184,10 @@ def shannon_diversity(X):
     """
     return 1 - shannon_evenness(X)
 
-class AccuracyAssessment():
-    """Base class for all assessment types.
-    """
+
+class AccuracyAssessment:
+    """Base class for all assessment types."""
+
     def __repr__(self):
         def val_se(value, standard_error):
             output = f"{value:.4f}"

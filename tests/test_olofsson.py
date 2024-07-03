@@ -2,7 +2,7 @@ import pytest
 import pandas as pd
 import numpy as np
 from acc_assessment.olofsson import Olofsson
-from acc_assessment.utils import _expand_error_matrix
+from acc_assessment.utils import expand_error_matrix
 from utils import check_within_tolerance
 
 PIXELS_TO_HA = 200000 / 18000
@@ -21,7 +21,7 @@ def assessment(request):
     df = pd.DataFrame(data)
     df.index = df.columns
     if request.param:
-        input_df = _expand_error_matrix(df, "map", "ref")
+        input_df = expand_error_matrix(df, "map", "ref")
         return Olofsson(input_df, mapped_area, "map", "ref")
     else:
         return Olofsson(df, mapped_area)
